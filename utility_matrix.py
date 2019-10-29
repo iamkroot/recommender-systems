@@ -26,7 +26,10 @@ class UtilityMatrix:
         print("Generating utility matrix")
         self._utility_mat = self.dh.train_ratings.pivot(
             index="user_id", columns="movie_id", values="rating"
-        ).reindex(columns=sorted(self.dh.full_ratings.movie_id.unique()))
+        ).reindex(
+            index=range(1, self.dh.max_user + 1),
+            columns=range(1, self.dh.max_movie + 1),
+        )
         pivot_to_csv(self._utility_mat, self.UTILITY_MAT_PATH)
 
 
