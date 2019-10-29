@@ -70,21 +70,23 @@ class LatentFactorModel:
                 self.step(*ratings[idx], gamma, lambda_)
                 if i and not i % 20000:
                     done += 20000
-                    dt = time.time() - start
-                    rate = done / dt
+                    rate = done / (time.time() - start)
                     print(f"\rRate={rate:.0f} ratings/s", end="")
-            print(
-                "\nEpoch {}; RMSE={:0.3f}; MAE={:0.3f};".format(
-                    epoch + 1, *self.error(ratings)
-                )
-            )
+            print()
+            yield epoch + 1, time.time() - start
+
+
+def main():
+    dh = DatasetHandler()
+    lf = LatentFactorModel(dh.max_movie + 1, dh.max_user + 1, dh.global_test_avg, 40)
+    train_ratings, test_ratings = dh.train_ratings.values, dh.test_ratings.values
+    start = time.time()
+    for epoch_num, epoch_time in lf.train(train_ratings):
+        print(f"Epoch {epoch_num}: Time taken: {epoch_time:.0f} seconds")
+        print("\tTrain RMSE={:.3f} MAE={:.3f}".format(*lf.error(train_ratings)))
+        print("\tTest RMSE={:.3f} MAE={:.3f}".format(*lf.error(test_ratings)))
+    print("Run time: {:.0f}s".format(time.time() - start))
 
 
 if __name__ == "__main__":
-    NUM_FACTORS = 40
-    dh = DatasetHandler()
-    lf = LatentFactorModel(dh.max_movie + 1, dh.max_user + 1, 3, NUM_FACTORS)
-    start = time.time()
-    lf.train(dh.train_ratings.values)
-    print("Test RMSE={:0.3f} MAE={:0.3f}".format(*lf.error(dh.test_ratings.values)))
-    print("Run time: {:.0f}s".format(time.time() - start))
+    main()

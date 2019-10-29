@@ -19,6 +19,7 @@ class DatasetHandler:
         self._full_ratings = None
         self._max_movie = None
         self._max_user = None
+        self._global_test_avg = None
 
     def read_ratings(self) -> pd.DataFrame:
         self._full_ratings = pd.read_csv(
@@ -35,6 +36,7 @@ class DatasetHandler:
         self._train_ratings, self._test_ratings = train_test_split(
             self.full_ratings, test_size=self.TEST_FRAC, random_state=self.RANDOM_STATE
         )
+        self._global_test_avg = self._train_ratings.rating.mean()
         if not store_only_test:
             self._train_ratings.to_csv(self.TRAIN_RATINGS_PATH, index=False)
         self._test_ratings.to_csv(self.TEST_RATINGS_PATH, index=False)
@@ -58,6 +60,12 @@ class DatasetHandler:
         return self._max_user
 
     @property
+    def global_test_avg(self):
+        if self._global_test_avg is None:
+            self.split_and_store()
+        return self._global_test_avg
+
+    @property
     def test_ratings(self) -> pd.DataFrame:
         if self._test_ratings is None:
             if self.TEST_RATINGS_PATH.exists():  # csv already stored earlier
@@ -74,9 +82,3 @@ class DatasetHandler:
             else:
                 self.split_and_store()
         return self._train_ratings
-
-
-
-if __name__ == "__main__":
-    dh = DatasetHandler()
-    print(dh.test_ratings.head())
