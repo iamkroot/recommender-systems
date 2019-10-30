@@ -47,6 +47,7 @@ class Collab_Filter:
             num+=x[0]*self.um[u][x[1]]
             den+=x[0]
         r = num/den
+        r = r + self.user_mean[u]
         return r
 
 
@@ -54,5 +55,5 @@ if __name__ == "__main__":
     cf = Collab_Filter("./data/utility_matrix.csv")
     # for x in cf.top_sim_items(1,1):
     #     print(x,cf.movies[x[1]])
-    print("Rating: ",cf.predict_rating(970,2194)+cf.user_mean[970])
+    print("Rating: ",cf.predict_rating(970,2194))
     # a = cf.self.
