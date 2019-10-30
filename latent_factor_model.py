@@ -31,8 +31,16 @@ class LatentFactorModel:
         self.P = np.random.normal(scale=init_sd, size=(num_factors, num_users))
         self.Q = np.random.normal(scale=init_sd, size=(num_factors, num_items))
 
-    def predict(self, user_id: int, item_id: int) -> float:
-        """Returns the predicted value of rating for given item_id-user_id pair"""
+    def predict(self, user_id, item_id) -> float:
+        """Predicts the rating value using the current model parameter states.
+        The parameters of the model are Item mean, User mean, Item-Factor matrix, and
+        User-Factor matrix
+
+        Args:
+            user_id (int): The ID of the user for which the prediction has to be made
+            item_id (int): The ID of the item for which the prediction has to be made
+        Returns:
+            The predicted value of rating for given item_id-user_id pair"""
         return (
             self.mu
             + self.b_i[item_id]
@@ -41,6 +49,15 @@ class LatentFactorModel:
         )
 
     def error(self, ratings):
+        """Computes the error of the input ratings vs predicted values from model.
+
+        Args:
+            ratings (np.ndarray): An array of <user_id, item_id, true_rating> tuples
+
+        Returns:
+            The Root Mean Square Error and Mean Absolute Error values
+
+        """
         sq_err, abs_err = 0, 0
         for user_id, item_id, rating in ratings:
             predicted = self.predict(user_id, item_id)
@@ -52,7 +69,15 @@ class LatentFactorModel:
         return rmse, mae
 
     def step(self, user_id, item_id, real_rating, gamma, lambda_):
-        """Perform a gradient descent step."""
+        """Performs a gradient descent step of the model.
+
+        Args:
+            user_id (int): The ID of the user for which the value has to be updated
+            item_id (int): The ID of the item for which the value has to be updated
+            real_rating (float): The true value of the rating given by user for the item
+            gamma (float): Parameter to control the magnitude of gradient descent step
+            lambda_ (float): Parameter for the regularization of P_u and Q_i vectors
+        """
         err_ui = real_rating - self.predict(user_id, item_id)
         self.b_i[item_id] += gamma * (err_ui - lambda_ * self.b_u[user_id])
         self.b_u[user_id] += gamma * (err_ui - lambda_ * self.b_i[item_id])
@@ -64,6 +89,17 @@ class LatentFactorModel:
         )
 
     def train(self, ratings, num_epochs=15, gamma=0.005, lambda_=0.02):
+        """Run gradient descent on the model using the given ratings dataset.
+
+        Args:
+            ratings (np.ndarray) : An array of <user_id, item_id, true_rating> tuples
+            num_epochs (int) : Number of epochs for which to run the gradient descent
+            gamma (float) : Parameter to control the magnitude of gradient descent step
+            lambda_ (float) : Parameter to control the regularization of P_u and Q_i
+
+        Yields:
+            int, float: The epoch number and the time taken for the epoch
+        """
         for epoch in range(num_epochs):
             start, done = time.time(), 0
             for i, idx in enumerate(np.random.permutation(len(ratings))):
@@ -77,6 +113,9 @@ class LatentFactorModel:
 
 
 def run_lfm(num_factors, num_epochs, gamma, lambda_):
+    """Run the LatentFactorModel using the given parameters, and also calculate RMSE
+    and MAE values on the test dataset after every epoch.
+    """
     dh = DatasetHandler()
     lf = LatentFactorModel(
         dh.max_movie + 1, dh.max_user + 1, dh.global_test_avg, num_factors
