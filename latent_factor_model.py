@@ -76,16 +76,33 @@ class LatentFactorModel:
             yield epoch + 1, time.time() - start
 
 
-def main():
+def run_lfm(num_factors, num_epochs, gamma, lambda_):
     dh = DatasetHandler()
-    lf = LatentFactorModel(dh.max_movie + 1, dh.max_user + 1, dh.global_test_avg, 40)
+    lf = LatentFactorModel(
+        dh.max_movie + 1, dh.max_user + 1, dh.global_test_avg, num_factors
+    )
     train_ratings, test_ratings = dh.train_ratings.values, dh.test_ratings.values
     start = time.time()
-    for epoch_num, epoch_time in lf.train(train_ratings):
+    for epoch_num, epoch_time in lf.train(train_ratings, num_epochs, gamma, lambda_):
         print(f"Epoch {epoch_num}: Time taken: {epoch_time:.0f} seconds")
         print("\tTrain RMSE={:.3f} MAE={:.3f}".format(*lf.error(train_ratings)))
         print("\tTest RMSE={:.3f} MAE={:.3f}".format(*lf.error(test_ratings)))
     print("Run time: {:.0f}s".format(time.time() - start))
+
+
+def main():
+    from collections import namedtuple
+
+    Params = namedtuple("Params", ["num_factors", "num_epochs", "gamma", "lambda_"])
+    configs = (
+        Params(10, 20, 0.005, 0.02),  # RMSE: 0.877 MAE: 0.690
+        Params(40, 20, 0.005, 0.02),  # RMSE: 0.871 MAE: 0.684
+        Params(100, 20, 0.005, 0.02),  # RMSE: 0.876 MAE: 0.687
+        Params(1000, 20, 0.005, 0.02),  # RMSE: 0.892 MAE: 0.702
+    )
+    for params in configs:
+        print(params)
+        run_lfm(params)
 
 
 if __name__ == "__main__":
