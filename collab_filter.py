@@ -8,7 +8,21 @@ from math import sqrt
 
 
 class Collab_Filter:
+    """
+    A Recommender System model based on the Collaborative filtering concepts.
+
+    An Item-Item based collaborative filtering is used to find similar items which then is used
+    to predict rating a user might give to a movie/item based on the ratings he gave to similar items.
+    Also calculates rating deviations of users to the form of the mean of ratings to handle strict and generous raters.
+    """
     def __init__(self, path):
+        """
+        Normalizes the Utility matrix consisting of users, movies and their ratings by subtracting values in a row
+        by their row mean , which handles the problem of strict and generous raters.
+
+        Args:
+            path (string) : The path to the csv which stores the utility matrix.
+        """
         self.path = path
         self.umDf = pd.read_csv(path, low_memory=False)
         self.user_mean = [0 for j in range(6041)]
@@ -32,11 +46,31 @@ class Collab_Filter:
         self.um = np.array(self.um)
 
     def item_sim(self, i, j):
+        """
+        Calculates similarity between two items/movies
+
+        Args:
+            i (int) : Column number of first movie
+            j (int) : Column number of second movie
+
+        Returns:
+            The similarity value between the two items
+        """
         return np.dot(self.um[1:, i], self.um[1:, j]) / (
             norm(self.um[1:, i]) * norm(self.um[1:, j])
         )
 
     def top_sim_items(self, u, i):
+        """
+        Finds the items most similar to given item , which are rated by the user
+
+        Args:
+            u (int) : User's ID
+            i (int) : Column number/movie_id of required item
+
+        Returns:
+            list : A list of movie_ids of movies similar to given movie and their similarity values
+        """
         ti = []
         for j in range(1, len(self.movies)):
             if j != i and self.um[u][j] != 0:
@@ -45,6 +79,16 @@ class Collab_Filter:
         return ti[:15]
 
     def predict_rating(self, u, m):
+        """
+        Predicts the rating a user might give to a movie
+
+        Args:
+            u (int) : User's ID
+            m (int) : movie_id of the required movie/item
+
+        Returns:
+            The predicted rating user u might give to movie m
+        """
         m = self.movies.index(str(m))
         ti = self.top_sim_items(u, m)
         num, den = 0, 0
