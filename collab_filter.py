@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import math
 from numpy.linalg import norm
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from math import sqrt
 
 
 class Collab_Filter:
