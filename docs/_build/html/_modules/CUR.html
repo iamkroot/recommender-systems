@@ -1,0 +1,353 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CUR &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for CUR</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">utility_matrix</span> <span class="k">import</span> <span class="n">UtilityMatrix</span>
+<span class="kn">from</span> <span class="nn">dataset_handler</span> <span class="k">import</span> <span class="n">DatasetHandler</span>
+
+
+<div class="viewcode-block" id="CUR"><a class="viewcode-back" href="../CUR.html#CUR.CUR">[docs]</a><span class="k">class</span> <span class="nc">CUR</span><span class="p">:</span>
+<div class="viewcode-block" id="CUR.mysvd"><a class="viewcode-back" href="../CUR.html#CUR.CUR.mysvd">[docs]</a>    <span class="k">def</span> <span class="nf">mysvd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs the SVD decomposition on the input matrix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            matrix (np.ndarray) : The user rating matrix</span>
+<span class="sd">            k (int) : the reduced dimensionality after decomposition</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The three SVD matrices U,Sigma and V_T</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="n">m</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;error: k greater than matrix dimensions.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">matrix_t</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">matrix_t</span><span class="p">)</span>  <span class="c1"># calculate matrix multiplied by its transpose</span>
+        <span class="n">values1</span><span class="p">,</span> <span class="n">v1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>  <span class="c1"># get eigenvalues and eigenvectors</span>
+        <span class="n">v1_t</span> <span class="o">=</span> <span class="n">v1</span><span class="o">.</span><span class="n">T</span>
+        <span class="c1"># discarding negative eigenvalues and corresponding eigenvectors (they are anyway tending to zero)</span>
+        <span class="n">v1_t</span><span class="p">[</span><span class="n">values1</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="n">v1_t</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">values1</span><span class="p">[</span><span class="n">values1</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># values1 = np.absolute(values1)</span>
+
+        <span class="n">values1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">values1</span><span class="p">)</span>  <span class="c1"># finding singular values.</span>
+        <span class="c1"># sort eigenvalues and eigenvectors in decreasing order</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">values1</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">values1</span> <span class="o">=</span> <span class="n">values1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="n">v1</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
+
+        <span class="n">U</span> <span class="o">=</span> <span class="n">v1</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">matrix_t</span><span class="p">,</span> <span class="n">matrix</span><span class="p">)</span>  <span class="c1"># calculate matrix transpose multiplied by matrix.</span>
+        <span class="n">values2</span><span class="p">,</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>  <span class="c1"># get eigenvalues and eigenvectors</span>
+        <span class="c1"># values2 = np.absolute(values2)</span>
+        <span class="c1"># discarding negative eigenvalues and corresponding eigenvectors(they are anyway tending to zero)</span>
+        <span class="n">v2_t</span> <span class="o">=</span> <span class="n">v2</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">v2_t</span><span class="p">[</span><span class="n">values2</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">v2_t</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">values2</span><span class="p">[</span><span class="n">values2</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">values2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">values2</span><span class="p">)</span>  <span class="c1"># finding singular values.</span>
+        <span class="c1"># sort eigenvalues and eigenvectors in decreasing order.</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">values2</span><span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">idx</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">values2</span> <span class="o">=</span> <span class="n">values2</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">v2</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>
+
+        <span class="n">V</span> <span class="o">=</span> <span class="n">v2</span>
+        <span class="n">V_t</span> <span class="o">=</span> <span class="n">V</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># taking V transpose.</span>
+
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>  <span class="c1"># setting the dimensions of sigma matrix.</span>
+
+            <span class="n">sigma</span><span class="p">[:</span><span class="n">n</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">values2</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">m</span><span class="p">:</span>
+            <span class="n">sigma</span><span class="p">[:,</span> <span class="p">:</span><span class="n">m</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">values1</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sigma</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">values1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">m</span> <span class="o">&gt;</span> <span class="n">k</span><span class="p">:</span>  <span class="c1"># slicing the matrices according to the k value.</span>
+            <span class="n">U</span> <span class="o">=</span> <span class="n">U</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">k</span><span class="p">:</span>
+            <span class="n">V_t</span> <span class="o">=</span> <span class="n">V_t</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="n">check</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">V_t</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="c1"># case = np.divide(check, values2[:k])</span>
+
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">check</span><span class="p">)</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">U</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">s1</span> <span class="o">==</span> <span class="n">s2</span>
+        <span class="c1"># choosing the correct signs of eigenvectors in the U matrix.</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">U</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">U</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">V_t</span></div>
+
+<div class="viewcode-block" id="CUR.mycur"><a class="viewcode-back" href="../CUR.html#CUR.CUR.mycur">[docs]</a>    <span class="k">def</span> <span class="nf">mycur</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs the CUR decomposition on the input matrix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            matrix (np.ndarray) : The user rating matrix</span>
+<span class="sd">            k (int) : the reduced dimensionality after decomposition</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The three CUR matrices C,U and R</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">m</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="n">m</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;error: k greater than matrix dimensions.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+        <span class="n">matrix_sq</span> <span class="o">=</span> <span class="n">matrix</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">sum_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">matrix_sq</span><span class="p">)</span>
+
+        <span class="n">frob_col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">matrix_sq</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">probs_col</span> <span class="o">=</span> <span class="n">frob_col</span> <span class="o">/</span> <span class="n">sum_sq</span>  <span class="c1"># probability of each column.</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">count1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>  <span class="c1"># array of column indexes.</span>
+        <span class="n">taken_c</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dup_c</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">while</span> <span class="n">count</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+            <span class="c1"># choosing column index based on probability.</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probs_col</span><span class="p">)</span>
+            <span class="n">count1</span> <span class="o">=</span> <span class="n">count1</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">taken_c</span><span class="p">:</span>
+                <span class="c1"># taking column after dividing it with root of k*probability.</span>
+                <span class="n">C</span><span class="p">[:,</span> <span class="n">count</span><span class="p">]</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">probs_col</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">count</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="c1"># np.sqrt(probs_col[i])</span>
+                <span class="n">taken_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">dup_c</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># discarding the duplicate column and increasing its count of duplicates.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="n">taken_c</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">dup_c</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span> <span class="o">=</span> <span class="n">dup_c</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="c1"># multiply columns by root of number of duplicates.</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dup_c</span><span class="p">))</span>
+
+        <span class="n">frob_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">matrix_sq</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">probs_row</span> <span class="o">=</span> <span class="n">frob_row</span> <span class="o">/</span> <span class="n">sum_sq</span>
+        <span class="c1"># probability of each row.</span>
+
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">count1</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># array of row indexes.</span>
+        <span class="n">taken_r</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dup_r</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">while</span> <span class="n">count</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+            <span class="c1"># choosing row index based on probability.</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probs_row</span><span class="p">)</span>
+            <span class="n">count1</span> <span class="o">=</span> <span class="n">count1</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">taken_r</span><span class="p">:</span>
+                <span class="c1"># taking row after dividing it with root of k*probability.</span>
+                <span class="n">R</span><span class="p">[</span><span class="n">count</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">probs_row</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="n">count</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">taken_r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">dup_r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># discarding the duplicate row and increasing its count of duplicates.</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="n">taken_r</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">dup_r</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span> <span class="o">=</span> <span class="n">dup_r</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># multiply rows by root of number of duplicates.</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">R</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dup_r</span><span class="p">))</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="n">W</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">I</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">taken_r</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">J</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">taken_c</span><span class="p">):</span>  <span class="c1"># forming the intersection matrix W.</span>
+                <span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">matrix</span><span class="p">[</span><span class="n">I</span><span class="p">,</span> <span class="n">J</span><span class="p">]</span>
+
+        <span class="n">X</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Y_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mysvd</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>  <span class="c1"># svd decomposition of W.</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">sigma</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># taking pseudo-inverse of sigma.</span>
+                <span class="n">sigma</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sigma</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">U</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Y_t</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>  <span class="c1"># finding U.</span>
+
+        <span class="k">return</span> <span class="n">C</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">R</span></div>
+
+<div class="viewcode-block" id="CUR.calcError"><a class="viewcode-back" href="../CUR.html#CUR.CUR.calcError">[docs]</a>    <span class="k">def</span> <span class="nf">calcError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the error between the predicted ratings and actual ratings</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            A (np.ndarray) : The predicted CUR Matrix</span>
+<span class="sd">            test (np.ndarray) : The actual test ratings</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The rmse and mae values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sq_err</span><span class="p">,</span> <span class="n">abs_err</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">rating</span> <span class="ow">in</span> <span class="n">test</span><span class="p">:</span>
+            <span class="n">predicted</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">user_id</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">item_id</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">predicted</span><span class="p">)</span> <span class="o">-</span> <span class="n">rating</span>
+            <span class="n">abs_err</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+            <span class="n">sq_err</span> <span class="o">+=</span> <span class="n">diff</span> <span class="o">*</span> <span class="n">diff</span>
+
+        <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sq_err</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="p">))</span>
+        <span class="n">mae</span> <span class="o">=</span> <span class="n">abs_err</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rmse</span><span class="p">,</span> <span class="n">mae</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">CUR</span><span class="p">()</span>
+    <span class="n">path1</span> <span class="o">=</span> <span class="s2">&quot;data/test_ratings.csv&quot;</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">UtilityMatrix</span><span class="p">()</span><span class="o">.</span><span class="n">utility_mat</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">Test_Set</span> <span class="o">=</span> <span class="n">DatasetHandler</span><span class="p">()</span><span class="o">.</span><span class="n">test_ratings</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]):</span>
+                <span class="nb">sum</span> <span class="o">+=</span> <span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]):</span>
+                <span class="n">M</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span> <span class="o">/</span> <span class="n">count</span>
+
+    <span class="n">C</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">R</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">mycur</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="mi">1000</span><span class="p">)</span>
+
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">C</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">R</span><span class="p">))</span>
+
+    <span class="n">err1</span><span class="p">,</span> <span class="n">err2</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">calcError</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">Test_Set</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">err1</span><span class="p">,</span> <span class="n">err2</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../CUR.html">CUR module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SVD.html">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../collab_filter_baseline.html">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../latent_factor_model.html">latent_factor_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utility_matrix.html">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

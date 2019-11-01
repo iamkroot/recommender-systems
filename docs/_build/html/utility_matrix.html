@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>utility_matrix module &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="utils module" href="utils.html" />
+    <link rel="prev" title="latent_factor_model module" href="latent_factor_model.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-utility_matrix">
+<span id="utility-matrix-module"></span><h1>utility_matrix module<a class="headerlink" href="#module-utility_matrix" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="utility_matrix.UtilityMatrix">
+<em class="property">class </em><code class="sig-prename descclassname">utility_matrix.</code><code class="sig-name descname">UtilityMatrix</code><a class="reference internal" href="_modules/utility_matrix.html#UtilityMatrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utility_matrix.UtilityMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Represents the utility matrix of Users x Movies</p>
+<dl class="attribute">
+<dt id="utility_matrix.UtilityMatrix.UTILITY_MAT_PATH">
+<code class="sig-name descname">UTILITY_MAT_PATH</code><em class="property"> = PosixPath('data/utility_matrix.csv')</em><a class="headerlink" href="#utility_matrix.UtilityMatrix.UTILITY_MAT_PATH" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="utility_matrix.UtilityMatrix.generate_matrix">
+<code class="sig-name descname">generate_matrix</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/utility_matrix.html#UtilityMatrix.generate_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utility_matrix.UtilityMatrix.generate_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create the utility matrix from the train dataset.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="utility_matrix.UtilityMatrix.utility_mat">
+<em class="property">property </em><code class="sig-name descname">utility_mat</code><a class="headerlink" href="#utility_matrix.UtilityMatrix.utility_mat" title="Permalink to this definition">¶</a></dt>
+<dd><p>The actual utility matrix</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="CUR.html">CUR module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SVD.html">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter_baseline.html">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="latent_factor_model.html">latent_factor_model module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="latent_factor_model.html" title="previous chapter">latent_factor_model module</a></li>
+      <li>Next: <a href="utils.html" title="next chapter">utils module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/utility_matrix.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

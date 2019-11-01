@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SVD module &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="collab_filter module" href="collab_filter.html" />
+    <link rel="prev" title="CUR module" href="CUR.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-SVD">
+<span id="svd-module"></span><h1>SVD module<a class="headerlink" href="#module-SVD" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="SVD.SVD">
+<em class="property">class </em><code class="sig-prename descclassname">SVD.</code><code class="sig-name descname">SVD</code><a class="reference internal" href="_modules/SVD.html#SVD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SVD.SVD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Recommender System model based on the Singular Value Decomposition concepts.</p>
+<p>The 0 values in each user row are replaced by the mean rating of each user.
+SVD factorizes the utility matrix into U(m x m), Sigma(m X n) and V-transpose(n X n)
+Dimensionality reduction reduces the dimensions of each matrix to k dimensions.
+The dot product U.Sigma.V* in the reduced form gives the prediction matrix.
+U is an m X m unitary matrix.
+Sigma is an m X n rectangular diagonal matrix, with each diagonal element as the
+singular values of the utility matrix.
+V is an n X n unitary matrix.</p>
+<dl class="method">
+<dt id="SVD.SVD.error">
+<code class="sig-name descname">error</code><span class="sig-paren">(</span><em class="sig-param">A</em>, <em class="sig-param">test_ratings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SVD.html#SVD.error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SVD.SVD.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the error of the input ratings vs predicted values from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ratings</strong> (<em>np.ndarray</em>) – An array of &lt;user_id, item_id, true_rating&gt; tuples</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The Root Mean Square Error and Mean Absolute Error values.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="SVD.SVD.generate_svd_matrices">
+<code class="sig-name descname">generate_svd_matrices</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/SVD.html#SVD.generate_svd_matrices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SVD.SVD.generate_svd_matrices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalizes the Utility matrix consisting of users, movies and their ratings by
+replacing 0s in a row by their row mean.
+Performs SVD on the normalized utility matrix and factorizes it into U, S and V*</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>An m X m unitary matrix
+S (list)        : List if singular values of the utility matrix
+V* (np.ndarray) : An n X n unitary matrix</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>U (np.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="SVD.SVD.get_dimensions_for_x_energy">
+<code class="sig-name descname">get_dimensions_for_x_energy</code><span class="sig-paren">(</span><em class="sig-param">S</em>, <em class="sig-param">fraction</em>, <em class="sig-param">initial</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SVD.html#SVD.get_dimensions_for_x_energy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SVD.SVD.get_dimensions_for_x_energy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the number of the dimensions to which Sigma matrix can be reduced to,
+so as to preserve (fraction * 100)% of the energy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>S</strong> (<em>list</em>) – List if singular values of the utility matrix</p></li>
+<li><p><strong>fraction</strong> (<em>float</em>) – The value to preserve (fraction * 100)% of the energy</p></li>
+<li><p><strong>initial</strong> (<em>int</em>) – The initial dimension number of dimensions</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>The number of dimension that will preserve atleast</dt><dd><p>(fraction * 100)% of the energy.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dim (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="SVD.SVD.predict_and_find_error">
+<code class="sig-name descname">predict_and_find_error</code><span class="sig-paren">(</span><em class="sig-param">test_ratings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SVD.html#SVD.predict_and_find_error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SVD.SVD.predict_and_find_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predicts the matrix equla to the utility matrix.
+Has two prediction components:
+1. Prediction using complete SVD reduced to 20 dimensions.
+2. Prediction using SVD with 90% energy
+Also displays the Root Mean Square Error, Mean Absolute Error values and
+the prediction time for each component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>test_ratings</strong> (<em>np.ndarray</em>) – An array of &lt;user_id, item_id, rating&gt; tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="SVD.SVD.svd_with_k_dimensions">
+<code class="sig-name descname">svd_with_k_dimensions</code><span class="sig-paren">(</span><em class="sig-param">U</em>, <em class="sig-param">S</em>, <em class="sig-param">VT</em>, <em class="sig-param">k</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/SVD.html#SVD.svd_with_k_dimensions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#SVD.SVD.svd_with_k_dimensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduces the matrices U, Sigma, V* to k dimensions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>U</strong> (<em>np.ndarray</em>) – An m X m unitary matrix</p></li>
+<li><p><strong>S</strong> (<em>list</em>) – List if singular values of the utility matrix</p></li>
+<li><p><strong>V*</strong> (<em>np.ndarray</em>) – An n X n unitary matrix</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – The dimension value to be reduced to</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The prediction matrix of the utility matrix.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>A(np.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="CUR.html">CUR module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter_baseline.html">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="latent_factor_model.html">latent_factor_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utility_matrix.html">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="CUR.html" title="previous chapter">CUR module</a></li>
+      <li>Next: <a href="collab_filter.html" title="next chapter">collab_filter module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/SVD.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
