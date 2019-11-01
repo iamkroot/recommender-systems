@@ -4,7 +4,6 @@ import math
 from numpy.linalg import norm
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import r2_score
 from math import sqrt
 
 
@@ -17,6 +16,7 @@ class CF_Baseline:
     Also calculates rating deviations of users to the form of the mean of ratings to handle strict and generous raters.
     The result is enhanced by computing baseline estimates for ratings to be predicted.
     """
+
     def __init__(self, path):
         """
         Pre-processes the Utility matrix consisting of users, movies and their ratings to contain only numbers
@@ -136,16 +136,17 @@ if __name__ == "__main__":
     #     print(x,cf.movies[x[1]])
     print("Rating: ", cfb.predict_rating(3589, 1562))
     test_df = pd.read_csv("./data/test_ratings.csv")
-    u_id = test_df['user_id'].values
-    m_id = test_df['movie_id'].values
-    Y = test_df['rating'].values
+    u_id = test_df["user_id"].values
+    m_id = test_df["movie_id"].values
+    Y = test_df["rating"].values
     predictions = []
     for i in range(15000):
-        if i>=4400 and i<4600:
-            predictions.append(Y[i]-0.4)
+        if i >= 4400 and i < 4600:
+            predictions.append(Y[i] - 0.4)
         else:
-            predictions.append(cfb.predict_rating(u_id[i],m_id[i]))
-        if i%200 == 0 and i!=0:
-            print("RMSE at ",i," :",sqrt(mean_squared_error(Y[:i+1], predictions)))
-            print("MAE at ",i," :",mean_absolute_error(Y[:i+1], predictions))
-            
+            predictions.append(cfb.predict_rating(u_id[i], m_id[i]))
+        if i % 200 == 0 and i != 0:
+            print(
+                "RMSE at ", i, " :", sqrt(mean_squared_error(Y[: i + 1], predictions))
+            )
+            print("MAE at ", i, " :", mean_absolute_error(Y[: i + 1], predictions))
