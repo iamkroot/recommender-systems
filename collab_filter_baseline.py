@@ -3,6 +3,7 @@ import pandas as pd
 import math
 from numpy.linalg import norm
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import r2_score
 from math import sqrt
 
@@ -146,3 +147,5 @@ if __name__ == "__main__":
             predictions.append(cfb.predict_rating(u_id[i],m_id[i]))
         if i%200 == 0 and i!=0:
             print("RMSE at ",i," :",sqrt(mean_squared_error(Y[:i+1], predictions)))
+            print("MAE at ",i," :",mean_absolute_error(Y[:i+1], predictions))
+            
