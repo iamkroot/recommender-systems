@@ -118,7 +118,7 @@ def run_lfm(num_factors, num_epochs, gamma, lambda_):
     """
     dh = DatasetHandler()
     lf = LatentFactorModel(
-        dh.max_movie + 1, dh.max_user + 1, dh.global_test_avg, num_factors
+        dh.max_movie + 1, dh.max_user + 1, dh.global_mean, num_factors
     )
     train_ratings, test_ratings = dh.train_ratings.values, dh.test_ratings.values
     start = time.time()

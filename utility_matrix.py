@@ -15,6 +15,7 @@ class UtilityMatrix:
 
     @property
     def utility_mat(self) -> pd.DataFrame:
+        """The actual utility matrix"""
         if self._utility_mat is None:
             if self.UTILITY_MAT_PATH.exists():
                 self._utility_mat = read_pivot_csv(self.UTILITY_MAT_PATH)
@@ -23,6 +24,7 @@ class UtilityMatrix:
         return self._utility_mat
 
     def generate_matrix(self):
+        """Create the utility matrix from the train dataset."""
         print("Generating utility matrix")
         self._utility_mat = self.dh.train_ratings.pivot(
             index="user_id", columns="movie_id", values="rating"
