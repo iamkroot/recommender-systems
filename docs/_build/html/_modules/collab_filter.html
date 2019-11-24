@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>collab_filter &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for collab_filter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="k">import</span> <span class="n">norm</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">mean_squared_error</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="k">import</span> <span class="n">mean_absolute_error</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">sqrt</span>
+
+
+<div class="viewcode-block" id="Collab_Filter"><a class="viewcode-back" href="../collab_filter.html#collab_filter.Collab_Filter">[docs]</a><span class="k">class</span> <span class="nc">Collab_Filter</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Recommender System model based on the Collaborative filtering concepts.</span>
+
+<span class="sd">    An Item-Item based collaborative filtering is used to find similar items which then</span>
+<span class="sd">    is used to predict rating a user might give to a movie/item based on the ratings he</span>
+<span class="sd">    gave to similar items. Also calculates rating deviations of users to the form of</span>
+<span class="sd">    the mean of ratings to handle strict and generous raters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalizes the Utility matrix consisting of users, movies and their ratings</span>
+<span class="sd">        by subtracting values in a row by their row mean, which handles the problem</span>
+<span class="sd">        of strict and generous raters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (string) : The path to the csv which stores the utility matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">umDf</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">low_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_mean</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">6041</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">um</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">umDf</span><span class="o">.</span><span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movies</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umDf</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="c1"># print(len(self.movies))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6041</span><span class="p">):</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movies</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]):</span>
+                    <span class="n">m</span> <span class="o">=</span> <span class="n">m</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span> <span class="o">/</span> <span class="n">cnt</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movies</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_mean</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># print(self.um[1][:],self.user_mean[1])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">um</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Collab_Filter.item_sim"><a class="viewcode-back" href="../collab_filter.html#collab_filter.Collab_Filter.item_sim">[docs]</a>    <span class="k">def</span> <span class="nf">item_sim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates similarity between two items/movies</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            i (int) : Column number of first movie</span>
+<span class="sd">            j (int) : Column number of second movie</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The similarity value between the two items</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">j</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="n">j</span><span class="p">])</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Collab_Filter.top_sim_items"><a class="viewcode-back" href="../collab_filter.html#collab_filter.Collab_Filter.top_sim_items">[docs]</a>    <span class="k">def</span> <span class="nf">top_sim_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finds the items most similar to given item , which are rated by the user</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            u (int) : User&#39;s ID</span>
+<span class="sd">            i (int) : Column number/movie_id of required item</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list : A list of movie_ids of movies similar to given movie and their</span>
+<span class="sd">            similarity values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ti</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movies</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">!=</span> <span class="n">i</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">ti</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">item_sim</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="n">j</span><span class="p">))</span>
+        <span class="n">ti</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ti</span><span class="p">[:</span><span class="mi">15</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Collab_Filter.predict_rating"><a class="viewcode-back" href="../collab_filter.html#collab_filter.Collab_Filter.predict_rating">[docs]</a>    <span class="k">def</span> <span class="nf">predict_rating</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predicts the rating a user might give to a movie</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            u (int) : User&#39;s ID</span>
+<span class="sd">            m (int) : movie_id of the required movie/item</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The predicted rating user u might give to movie m</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movies</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+        <span class="n">ti</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">top_sim_items</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="n">num</span><span class="p">,</span> <span class="n">den</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ti</span><span class="p">:</span>
+            <span class="n">num</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">den</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">den</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">r</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_mean</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">r</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">cf</span> <span class="o">=</span> <span class="n">Collab_Filter</span><span class="p">(</span><span class="s2">&quot;./data/utility_matrix.csv&quot;</span><span class="p">)</span>
+    <span class="c1"># for x in cf.top_sim_items(1,1):</span>
+    <span class="c1">#     print(x,cf.movies[x[1]])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Rating: &quot;</span><span class="p">,</span> <span class="n">cf</span><span class="o">.</span><span class="n">predict_rating</span><span class="p">(</span><span class="mi">970</span><span class="p">,</span> <span class="mi">2194</span><span class="p">))</span>
+    <span class="n">test_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">&quot;./data/test_ratings.csv&quot;</span><span class="p">)</span>
+    <span class="n">u_id</span> <span class="o">=</span> <span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">m_id</span> <span class="o">=</span> <span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;movie_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="n">test_df</span><span class="p">[</span><span class="s2">&quot;rating&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15000</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">4400</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">4600</span><span class="p">:</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.4</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cf</span><span class="o">.</span><span class="n">predict_rating</span><span class="p">(</span><span class="n">u_id</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">m_id</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">200</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;RMSE at &quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="s2">&quot; :&quot;</span><span class="p">,</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">Y</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">predictions</span><span class="p">))</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MAE at &quot;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="s2">&quot; :&quot;</span><span class="p">,</span> <span class="n">mean_absolute_error</span><span class="p">(</span><span class="n">Y</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">],</span> <span class="n">predictions</span><span class="p">))</span>
+
+    <span class="c1"># a = cf.self.</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../CUR.html">CUR module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SVD.html">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../collab_filter_baseline.html">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../latent_factor_model.html">latent_factor_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utility_matrix.html">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

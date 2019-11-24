@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>latent_factor_model module &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="utility_matrix module" href="utility_matrix.html" />
+    <link rel="prev" title="dataset_handler module" href="dataset_handler.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-latent_factor_model">
+<span id="latent-factor-model-module"></span><h1>latent_factor_model module<a class="headerlink" href="#module-latent_factor_model" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="latent_factor_model.LatentFactorModel">
+<em class="property">class </em><code class="sig-prename descclassname">latent_factor_model.</code><code class="sig-name descname">LatentFactorModel</code><span class="sig-paren">(</span><em class="sig-param">num_items</em>, <em class="sig-param">num_users</em>, <em class="sig-param">mu</em>, <em class="sig-param">num_factors</em>, <em class="sig-param">init_sd=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/latent_factor_model.html#LatentFactorModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.LatentFactorModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Recommender System model based on the Latent Factor Modelling of concepts.</p>
+<p>Gradient descent is applied to solve the matrix factorization to optimize for
+least RMSE. Also calculates rating deviations of users to handle strict and
+generous raters.</p>
+<dl class="method">
+<dt id="latent_factor_model.LatentFactorModel.error">
+<code class="sig-name descname">error</code><span class="sig-paren">(</span><em class="sig-param">ratings</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/latent_factor_model.html#LatentFactorModel.error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.LatentFactorModel.error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the error of the input ratings vs predicted values from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ratings</strong> (<em>np.ndarray</em>) – An array of &lt;user_id, item_id, true_rating&gt; tuples</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The Root Mean Square Error and Mean Absolute Error values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="latent_factor_model.LatentFactorModel.predict">
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">user_id</em>, <em class="sig-param">item_id</em><span class="sig-paren">)</span> &#x2192; float<a class="reference internal" href="_modules/latent_factor_model.html#LatentFactorModel.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.LatentFactorModel.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predicts the rating value using the current model parameter states.
+The parameters of the model are Item mean, User mean, Item-Factor matrix, and
+User-Factor matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em>) – The ID of the user for which the prediction has to be made</p></li>
+<li><p><strong>item_id</strong> (<em>int</em>) – The ID of the item for which the prediction has to be made</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The predicted value of rating for given item_id-user_id pair</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="latent_factor_model.LatentFactorModel.step">
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">user_id</em>, <em class="sig-param">item_id</em>, <em class="sig-param">real_rating</em>, <em class="sig-param">gamma</em>, <em class="sig-param">lambda_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/latent_factor_model.html#LatentFactorModel.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.LatentFactorModel.step" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs a gradient descent step of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user_id</strong> (<em>int</em>) – The ID of the user for which the value has to be updated</p></li>
+<li><p><strong>item_id</strong> (<em>int</em>) – The ID of the item for which the value has to be updated</p></li>
+<li><p><strong>real_rating</strong> (<em>float</em>) – The true value of the rating given by user for the item</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Parameter to control the magnitude of gradient descent step</p></li>
+<li><p><strong>lambda</strong> (<em>float</em>) – Parameter for the regularization of P_u and Q_i vectors</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="latent_factor_model.LatentFactorModel.train">
+<code class="sig-name descname">train</code><span class="sig-paren">(</span><em class="sig-param">ratings</em>, <em class="sig-param">num_epochs=15</em>, <em class="sig-param">gamma=0.005</em>, <em class="sig-param">lambda_=0.02</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/latent_factor_model.html#LatentFactorModel.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.LatentFactorModel.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run gradient descent on the model using the given ratings dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ratings</strong> (<em>np.ndarray</em>) – An array of &lt;user_id, item_id, true_rating&gt; tuples</p></li>
+<li><p><strong>num_epochs</strong> (<em>int</em>) – Number of epochs for which to run the gradient descent</p></li>
+<li><p><strong>gamma</strong> (<em>float</em>) – Parameter to control the magnitude of gradient descent step</p></li>
+<li><p><strong>lambda</strong> (<em>float</em>) – Parameter to control the regularization of P_u and Q_i</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p><em>int, float</em> – The epoch number and the time taken for the epoch</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="latent_factor_model.main">
+<code class="sig-prename descclassname">latent_factor_model.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/latent_factor_model.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="latent_factor_model.run_lfm">
+<code class="sig-prename descclassname">latent_factor_model.</code><code class="sig-name descname">run_lfm</code><span class="sig-paren">(</span><em class="sig-param">num_factors</em>, <em class="sig-param">num_epochs</em>, <em class="sig-param">gamma</em>, <em class="sig-param">lambda_</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/latent_factor_model.html#run_lfm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#latent_factor_model.run_lfm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the LatentFactorModel using the given parameters, and also calculate RMSE
+and MAE values on the test dataset after every epoch.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="CUR.html">CUR module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SVD.html">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter_baseline.html">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">latent_factor_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utility_matrix.html">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="dataset_handler.html" title="previous chapter">dataset_handler module</a></li>
+      <li>Next: <a href="utility_matrix.html" title="next chapter">utility_matrix module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/latent_factor_model.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

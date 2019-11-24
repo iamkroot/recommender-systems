@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>collab_filter_baseline module &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="dataset_handler module" href="dataset_handler.html" />
+    <link rel="prev" title="collab_filter module" href="collab_filter.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-collab_filter_baseline">
+<span id="collab-filter-baseline-module"></span><h1>collab_filter_baseline module<a class="headerlink" href="#module-collab_filter_baseline" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="collab_filter_baseline.CF_Baseline">
+<em class="property">class </em><code class="sig-prename descclassname">collab_filter_baseline.</code><code class="sig-name descname">CF_Baseline</code><span class="sig-paren">(</span><em class="sig-param">path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/collab_filter_baseline.html#CF_Baseline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#collab_filter_baseline.CF_Baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A Recommender System model based on the Collaborative filtering concepts with ceratin enhancements.</p>
+<p>An Item-Item based collaborative filtering is used to find similar items which then is used to
+predict rating a user might give to a movie/item based on the ratings he gave to similar items.
+Also calculates rating deviations of users to the form of the mean of ratings to handle strict and generous raters.
+The result is enhanced by computing baseline estimates for ratings to be predicted.</p>
+<dl class="method">
+<dt id="collab_filter_baseline.CF_Baseline.baseline">
+<code class="sig-name descname">baseline</code><span class="sig-paren">(</span><em class="sig-param">u</em>, <em class="sig-param">m</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/collab_filter_baseline.html#CF_Baseline.baseline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#collab_filter_baseline.CF_Baseline.baseline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a baseline estimate for a given user and movie</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u</strong> (<em>int</em>) – User’s ID</p></li>
+<li><p><strong>m</strong> (<em>int</em>) – movie_id of the required movie/item</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The baseline estimate of a rating for a give user and movie</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="collab_filter_baseline.CF_Baseline.item_sim">
+<code class="sig-name descname">item_sim</code><span class="sig-paren">(</span><em class="sig-param">i</em>, <em class="sig-param">j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/collab_filter_baseline.html#CF_Baseline.item_sim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#collab_filter_baseline.CF_Baseline.item_sim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates similarity between two items/movies</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Column number of first movie</p></li>
+<li><p><strong>j</strong> (<em>int</em>) – Column number of second movie</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The similarity value between the two items</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="collab_filter_baseline.CF_Baseline.predict_rating">
+<code class="sig-name descname">predict_rating</code><span class="sig-paren">(</span><em class="sig-param">u</em>, <em class="sig-param">m</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/collab_filter_baseline.html#CF_Baseline.predict_rating"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#collab_filter_baseline.CF_Baseline.predict_rating" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predicts the rating a user might give to a movie</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u</strong> (<em>int</em>) – User’s ID</p></li>
+<li><p><strong>m</strong> (<em>int</em>) – movie_id of the required movie/item</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The predicted rating user u might give to movie m</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="collab_filter_baseline.CF_Baseline.top_sim_items">
+<code class="sig-name descname">top_sim_items</code><span class="sig-paren">(</span><em class="sig-param">u</em>, <em class="sig-param">i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/collab_filter_baseline.html#CF_Baseline.top_sim_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#collab_filter_baseline.CF_Baseline.top_sim_items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the items most similar to given item , which are rated by the user</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>u</strong> (<em>int</em>) – User’s ID</p></li>
+<li><p><strong>i</strong> (<em>int</em>) – Column number/movie_id of required item</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of movie_ids of movies similar to given movie and their similarity values</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="CUR.html">CUR module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SVD.html">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="latent_factor_model.html">latent_factor_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utility_matrix.html">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="collab_filter.html" title="previous chapter">collab_filter module</a></li>
+      <li>Next: <a href="dataset_handler.html" title="next chapter">dataset_handler module</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/collab_filter_baseline.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

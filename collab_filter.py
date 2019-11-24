@@ -4,7 +4,6 @@ import math
 from numpy.linalg import norm
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import r2_score
 from math import sqrt
 
 
@@ -12,14 +11,17 @@ class Collab_Filter:
     """
     A Recommender System model based on the Collaborative filtering concepts.
 
-    An Item-Item based collaborative filtering is used to find similar items which then is used
-    to predict rating a user might give to a movie/item based on the ratings he gave to similar items.
-    Also calculates rating deviations of users to the form of the mean of ratings to handle strict and generous raters.
+    An Item-Item based collaborative filtering is used to find similar items which then
+    is used to predict rating a user might give to a movie/item based on the ratings he
+    gave to similar items. Also calculates rating deviations of users to the form of
+    the mean of ratings to handle strict and generous raters.
     """
+
     def __init__(self, path):
         """
-        Normalizes the Utility matrix consisting of users, movies and their ratings by subtracting values in a row
-        by their row mean , which handles the problem of strict and generous raters.
+        Normalizes the Utility matrix consisting of users, movies and their ratings
+        by subtracting values in a row by their row mean, which handles the problem
+        of strict and generous raters.
 
         Args:
             path (string) : The path to the csv which stores the utility matrix.
@@ -70,7 +72,8 @@ class Collab_Filter:
             i (int) : Column number/movie_id of required item
 
         Returns:
-            list : A list of movie_ids of movies similar to given movie and their similarity values
+            list : A list of movie_ids of movies similar to given movie and their
+            similarity values
         """
         ti = []
         for j in range(1, len(self.movies)):
@@ -107,17 +110,19 @@ if __name__ == "__main__":
     #     print(x,cf.movies[x[1]])
     print("Rating: ", cf.predict_rating(970, 2194))
     test_df = pd.read_csv("./data/test_ratings.csv")
-    u_id = test_df['user_id'].values
-    m_id = test_df['movie_id'].values
-    Y = test_df['rating'].values
+    u_id = test_df["user_id"].values
+    m_id = test_df["movie_id"].values
+    Y = test_df["rating"].values
     predictions = []
     for i in range(15000):
-        if i>=4400 and i<4600:
-            predictions.append(Y[i]-0.4)
+        if i >= 4400 and i < 4600:
+            predictions.append(Y[i] - 0.4)
         else:
-            predictions.append(cf.predict_rating(u_id[i],m_id[i]))
-        if i%200 == 0 and i!=0:
-            print("RMSE at ",i," :",sqrt(mean_squared_error(Y[:i+1], predictions)))
-            print("MAE at ",i," :",mean_absolute_error(Y[:i+1], predictions))
+            predictions.append(cf.predict_rating(u_id[i], m_id[i]))
+        if i % 200 == 0 and i != 0:
+            print(
+                "RMSE at ", i, " :", sqrt(mean_squared_error(Y[: i + 1], predictions))
+            )
+            print("MAE at ", i, " :", mean_absolute_error(Y[: i + 1], predictions))
 
     # a = cf.self.

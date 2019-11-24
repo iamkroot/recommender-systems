@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SVD &#8212; Recommender Systems  documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for SVD</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.linalg</span> <span class="k">import</span> <span class="n">svd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">dataset_handler</span> <span class="k">import</span> <span class="n">DatasetHandler</span>
+<span class="kn">from</span> <span class="nn">utility_matrix</span> <span class="k">import</span> <span class="n">UtilityMatrix</span>
+
+
+<div class="viewcode-block" id="SVD"><a class="viewcode-back" href="../SVD.html#SVD.SVD">[docs]</a><span class="k">class</span> <span class="nc">SVD</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Recommender System model based on the Singular Value Decomposition concepts.</span>
+
+<span class="sd">    The 0 values in each user row are replaced by the mean rating of each user.</span>
+<span class="sd">    SVD factorizes the utility matrix into U(m x m), Sigma(m X n) and V-transpose(n X n)</span>
+<span class="sd">    Dimensionality reduction reduces the dimensions of each matrix to k dimensions.</span>
+<span class="sd">    The dot product U.Sigma.V* in the reduced form gives the prediction matrix.</span>
+<span class="sd">    U is an m X m unitary matrix.</span>
+<span class="sd">    Sigma is an m X n rectangular diagonal matrix, with each diagonal element as the</span>
+<span class="sd">    singular values of the utility matrix.</span>
+<span class="sd">    V is an n X n unitary matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">um</span> <span class="o">=</span> <span class="n">UtilityMatrix</span><span class="p">()</span><span class="o">.</span><span class="n">utility_mat</span><span class="o">.</span><span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movies</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umDf</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SVD.generate_svd_matrices"><a class="viewcode-back" href="../SVD.html#SVD.SVD.generate_svd_matrices">[docs]</a>    <span class="k">def</span> <span class="nf">generate_svd_matrices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalizes the Utility matrix consisting of users, movies and their ratings by</span>
+<span class="sd">        replacing 0s in a row by their row mean.</span>
+<span class="sd">        Performs SVD on the normalized utility matrix and factorizes it into U, S and V*</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            U (np.ndarray)  : An m X m unitary matrix</span>
+<span class="sd">            S (list)        : List if singular values of the utility matrix</span>
+<span class="sd">            V* (np.ndarray) : An n X n unitary matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]):</span>
+                    <span class="nb">sum</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+                    <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span> <span class="o">/</span> <span class="n">count</span>
+
+        <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">VT</span> <span class="o">=</span> <span class="n">svd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">um</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">VT</span></div>
+
+<div class="viewcode-block" id="SVD.svd_with_k_dimensions"><a class="viewcode-back" href="../SVD.html#SVD.SVD.svd_with_k_dimensions">[docs]</a>    <span class="k">def</span> <span class="nf">svd_with_k_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">VT</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduces the matrices U, Sigma, V* to k dimensions</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            U (np.ndarray)  : An m X m unitary matrix</span>
+<span class="sd">            S (list)        : List if singular values of the utility matrix</span>
+<span class="sd">            V* (np.ndarray) : An n X n unitary matrix</span>
+<span class="sd">            k (int)         : The dimension value to be reduced to</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A(np.ndarray) : The prediction matrix of the utility matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="n">U</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">Sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+        <span class="n">Sigma</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">S</span><span class="p">[:</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">VT</span> <span class="o">=</span> <span class="n">VT</span><span class="p">[:</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="n">A</span> <span class="o">=</span> <span class="n">U</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Sigma</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">VT</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">A</span></div>
+
+<div class="viewcode-block" id="SVD.get_dimensions_for_x_energy"><a class="viewcode-back" href="../SVD.html#SVD.SVD.get_dimensions_for_x_energy">[docs]</a>    <span class="k">def</span> <span class="nf">get_dimensions_for_x_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">fraction</span><span class="p">,</span> <span class="n">initial</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finds the number of the dimensions to which Sigma matrix can be reduced to,</span>
+<span class="sd">        so as to preserve (fraction * 100)% of the energy.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            S (list)        : List if singular values of the utility matrix</span>
+<span class="sd">            fraction(float) : The value to preserve (fraction * 100)% of the energy</span>
+<span class="sd">            initial (int)   : The initial dimension number of dimensions</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dim (int) : The number of dimension that will preserve atleast</span>
+<span class="sd">                (fraction * 100)% of the energy.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">S</span> <span class="o">=</span> <span class="n">S</span><span class="p">[:</span><span class="n">initial</span><span class="p">]</span>
+        <span class="n">sq_sum</span><span class="p">,</span> <span class="n">red_sum</span><span class="p">,</span> <span class="n">dim</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">S</span><span class="p">:</span>
+            <span class="n">sq_sum</span> <span class="o">+=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">S</span><span class="p">:</span>
+            <span class="n">red_sum</span> <span class="o">+=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span>
+            <span class="n">dim</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">red_sum</span> <span class="o">/</span> <span class="n">sq_sum</span> <span class="o">&gt;=</span> <span class="n">fraction</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dim</span></div>
+
+<div class="viewcode-block" id="SVD.predict_and_find_error"><a class="viewcode-back" href="../SVD.html#SVD.SVD.predict_and_find_error">[docs]</a>    <span class="k">def</span> <span class="nf">predict_and_find_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_ratings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Predicts the matrix equla to the utility matrix.</span>
+<span class="sd">        Has two prediction components:</span>
+<span class="sd">        1. Prediction using complete SVD reduced to 20 dimensions.</span>
+<span class="sd">        2. Prediction using SVD with 90% energy</span>
+<span class="sd">        Also displays the Root Mean Square Error, Mean Absolute Error values and</span>
+<span class="sd">        the prediction time for each component.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            test_ratings (np.ndarray): An array of &lt;user_id, item_id, rating&gt; tuples</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">VT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_svd_matrices</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generation of SVD took &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; secs&quot;</span><span class="p">)</span>
+
+        <span class="n">next_part</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># A = self.svd_with_energy_k(U, S, VT, k=len(self.movies)-1)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">svd_with_k_dimensions</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">VT</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">rmse</span><span class="p">,</span> <span class="n">mae</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">test_ratings</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;For complete SVD:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;RMSE: &quot;</span><span class="p">,</span> <span class="n">rmse</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MAE: &quot;</span><span class="p">,</span> <span class="n">mae</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;Prediction and error calculation of complete SVD took &quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">next_part</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot; secs&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">next_part</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="n">dim_90</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimensions_for_x_energy</span><span class="p">(</span><span class="n">S</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">initial</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="c1"># A = self.svd_with_energy_k(U, S, VT, k=int((len(self.movies)-1)*0.9))</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">svd_with_k_dimensions</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">VT</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">dim_90</span><span class="p">)</span>
+        <span class="n">rmse</span><span class="p">,</span> <span class="n">mae</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">test_ratings</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">For SVD with 90</span><span class="si">% e</span><span class="s2">nergy:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;RMSE: &quot;</span><span class="p">,</span> <span class="n">rmse</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MAE: &quot;</span><span class="p">,</span> <span class="n">mae</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;Prediction and error calculation of SVD with 90</span><span class="si">% e</span><span class="s2">nergy took &quot;</span>
+            <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">next_part</span><span class="p">)</span>
+            <span class="o">+</span> <span class="s2">&quot; secs&quot;</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">Overall process: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; secs&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SVD.error"><a class="viewcode-back" href="../SVD.html#SVD.SVD.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">test_ratings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the error of the input ratings vs predicted values from model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ratings (np.ndarray): An array of &lt;user_id, item_id, true_rating&gt; tuples</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The Root Mean Square Error and Mean Absolute Error values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sq_err</span><span class="p">,</span> <span class="n">abs_err</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">rating</span> <span class="ow">in</span> <span class="n">test_ratings</span><span class="p">:</span>
+            <span class="n">predicted</span> <span class="o">=</span> <span class="n">A</span><span class="p">[</span><span class="n">user_id</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="n">item_id</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">diff</span> <span class="o">=</span> <span class="n">predicted</span> <span class="o">-</span> <span class="n">rating</span>
+            <span class="n">abs_err</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+            <span class="n">sq_err</span> <span class="o">+=</span> <span class="n">diff</span> <span class="o">*</span> <span class="n">diff</span>
+
+        <span class="n">rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sq_err</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_ratings</span><span class="p">))</span>
+        <span class="n">mae</span> <span class="o">=</span> <span class="n">abs_err</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_ratings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rmse</span><span class="p">,</span> <span class="n">mae</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">SVD</span><span class="p">()</span>
+    <span class="n">dh</span> <span class="o">=</span> <span class="n">DatasetHandler</span><span class="p">()</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">predict_and_find_error</span><span class="p">(</span><span class="n">dh</span><span class="o">.</span><span class="n">test_ratings</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Recommender Systems</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../CUR.html">CUR module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SVD.html">SVD module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../collab_filter.html">collab_filter module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../collab_filter_baseline.html">collab_filter_baseline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dataset_handler.html">dataset_handler module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../latent_factor_model.html">latent_factor_model module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utility_matrix.html">utility_matrix module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, Krut Patel, P Yedhu Tilak, Akhil Agarwal, Smit Sheth.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -19,9 +19,10 @@ class DatasetHandler:
         self._full_ratings = None
         self._max_movie = None
         self._max_user = None
-        self._global_test_avg = None
+        self._global_mean = None
 
     def read_ratings(self) -> pd.DataFrame:
+        """Read the raw Movielens Dataset into a Dataframe"""
         self._full_ratings = pd.read_csv(
             self.FULL_RATINGS_PATH,
             sep="::",
@@ -33,40 +34,46 @@ class DatasetHandler:
         self._max_movie = self.full_ratings.movie_id.max()
 
     def split_and_store(self, store_only_test=True):
+        """Split the raw dataset into train and test sets, and store them as csv."""
         self._train_ratings, self._test_ratings = train_test_split(
             self.full_ratings, test_size=self.TEST_FRAC, random_state=self.RANDOM_STATE
         )
-        self._global_test_avg = self._train_ratings.rating.mean()
+        self._global_mean = self._train_ratings.rating.mean()
         if not store_only_test:
             self._train_ratings.to_csv(self.TRAIN_RATINGS_PATH, index=False)
         self._test_ratings.to_csv(self.TEST_RATINGS_PATH, index=False)
 
     @property
-    def full_ratings(self):
+    def full_ratings(self) -> pd.DataFrame:
+        """The full ratings dataset."""
         if self._full_ratings is None:
             self.read_ratings()
         return self._full_ratings
 
     @property
-    def max_movie(self):
+    def max_movie(self) -> int:
+        """The largest movie_id in the raw dataset."""
         if self._max_movie is None:
             self.read_ratings()
         return self._max_movie
 
     @property
-    def max_user(self):
+    def max_user(self) -> int:
+        """The largest user_id in the raw dataset."""
         if self._max_user is None:
             self.read_ratings()
         return self._max_user
 
     @property
-    def global_test_avg(self):
-        if self._global_test_avg is None:
+    def global_mean(self) -> float:
+        """The mean rating in the entire train dataset."""
+        if self._global_mean is None:
             self.split_and_store()
-        return self._global_test_avg
+        return self._global_mean
 
     @property
     def test_ratings(self) -> pd.DataFrame:
+        """The test dataset."""
         if self._test_ratings is None:
             if self.TEST_RATINGS_PATH.exists():  # csv already stored earlier
                 self._test_ratings = pd.read_csv(self.TEST_RATINGS_PATH)
@@ -76,6 +83,7 @@ class DatasetHandler:
 
     @property
     def train_ratings(self) -> pd.DataFrame:
+        """The train dataset."""
         if self._train_ratings is None:
             if self.TRAIN_RATINGS_PATH.exists():  # csv already stored earlier
                 self._train_ratings = pd.read_csv(self.TRAIN_RATINGS_PATH)
