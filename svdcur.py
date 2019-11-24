@@ -10,7 +10,7 @@ with open('./dataset/ratings.dat', 'r') as file:
     for line in file:
         user_id,movie_id,rating_value,timestamp = [*map(int, line.split('::'))]
         ratings[user_id][movie_id] = rating_value
-        
+
 def normalise(ratings):
     for user,movie_ratings in ratings.items():
         mean = sum(movie_ratings.values()) / len(movie_ratings.values())
@@ -18,7 +18,7 @@ def normalise(ratings):
             if(movie_ratings[movie_id] > 0):
                 movie_ratings[movie_id] -= mean
     return ratings
-    
+
 ratings = normalise(ratings)
 
 def RMSE(pred, truth):
@@ -35,10 +35,10 @@ def RMSE(pred, truth):
 def RMSE_mat(matA, matB):
     '''
     Calculate Root Mean Square Error (RMSE) between two matrices. Mainly used
-    to find error original and reconstructed matrices while working with 
+    to find error original and reconstructed matrices while working with
     matrix decompositions.
     Inputs:
-    matA (2D numpy array): Matrix A 
+    matA (2D numpy array): Matrix A
     matB (2D numpy array): Matrix B
 
     Returns:
@@ -48,7 +48,7 @@ def RMSE_mat(matA, matB):
 
 def MAE(matA, matB):
     return np.sum(np.abs(matA-matB)) /(matA.shape[0]*matA.shape[1])
-    
+
 
 #SVD
 
@@ -56,7 +56,7 @@ def MAE(matA, matB):
 class SVD_topk:
     """
     A Recommender System model based on the Singular Value Decomposition concepts.
-    
+
     Normalizes the Utility matrix consisting of users, movies and their ratings by subtracting values in a row
     by their row mean , which handles the problem of strict and generous raters.
     SVD factorizes the utility matrix into U(m x m), Sigma(m X n) and V* (V-transpose) (n X n).
@@ -66,7 +66,7 @@ class SVD_topk:
         self.K = K
         self.matrix = matrix
         self.MAX_USERS = len(self.matrix)
-        self.MAX_ITEMS = len(self.matrix[0])        
+        self.MAX_ITEMS = len(self.matrix[0])
         self.generate_svd_matrices()
         self.tryDimReduction()
         self.multiply()
@@ -81,7 +81,7 @@ class SVD_topk:
         self.index_AAt = sorted(range(len(self.eigen_values_AAt)),
                              key=lambda k: self.eigen_values_AAt[k], reverse=True)[:self.rank_AAt]
         self.U = np.zeros(shape=(self.MAX_USERS,self.rank_AAt))
-        self.eigen_values_AAt = self.eigen_values_AAt[::-1] 
+        self.eigen_values_AAt = self.eigen_values_AAt[::-1]
         self.eigen_values_AAt = self.eigen_values_AAt[:self.rank_AAt]
 
         for i in range(self.rank_AAt):
@@ -133,7 +133,7 @@ print("MAE for SVD: ", MAE(pred,matrix))
 class SVD_90:
     """
     A Recommender System model based on the Singular Value Decomposition concepts.
-    
+
     Normalizes the Utility matrix consisting of users, movies and their ratings by subtracting values in a row
     by their row mean , which handles the problem of strict and generous raters.
     SVD factorizes the utility matrix into U(m x m), Sigma(m X n) and V* (V-transpose) (n X n).
@@ -157,13 +157,13 @@ class SVD_90:
         self.index_AAt = sorted(range(len(self.eigen_values_AAt)),
                              key=lambda k: self.eigen_values_AAt[k], reverse=True)[:self.rank_AAt]
         self.U = np.zeros(shape=(self.MAX_USERS,self.rank_AAt))
-        self.eigen_values_AAt = self.eigen_values_AAt[::-1] 
+        self.eigen_values_AAt = self.eigen_values_AAt[::-1]
         self.eigen_values_AAt = self.eigen_values_AAt[:self.rank_AAt]
 
         for i in range(self.rank_AAt):
             self.U[:,i] = self.eigen_vectors_AAt[:,self.index_AAt[i]]
 
-        
+
         self.sigma = np.zeros(shape=(self.rank_AAt, self.rank_AAt))
         for i in range(self.rank_AAt):
             self.sigma[i,i] = self.eigen_values_AAt[i] ** 0.5
@@ -204,7 +204,7 @@ class SVD_90:
         """ Multiplies the U, V and sigma matrices to get the matrix of predicted ratings.
         """
         self.result = np.dot((np.dot(self.U, self.sigma)), self.V) * (-1)
-        
+
 matrix = np.zeros(shape=(3000, 3000))
 for i in range(3000):
     for j in range(3000):
@@ -218,11 +218,11 @@ end = time.time()
 print("SVD with 90% energy took : ", end-start, "secs to complete")
 print("RMSE for SVD with 90% energy: ", RMSE_mat(pred,matrix))
 print("MAE for SVD with 90% energy: ", MAE(pred,matrix))
-#cur 
+#cur
 class CUR_topk:
     """
     A Recommender System model based on CUR approximation.
-    
+
     Normalizes the Utility matrix consisting of users, movies and their ratings by subtracting values in a row
     by their row mean , which handles the problem of strict and generous raters.
     CUR factorizes the utility matrix into C(m x k), U(k X k) and R(k X n)..
@@ -235,11 +235,11 @@ class CUR_topk:
         self.numRows = np.shape(self.matrix)[0]
         self.numCols = np.shape(self.matrix)[1]
         self.getProbDistribution()
-        self.find_C_U_R(1,2)
+        self.find_C_U_R(1,50)
         self.multiply()
 
     def getProbDistribution(self):
-        """ Gets the probability distribution for the rows and columns to be used in 
+        """ Gets the probability distribution for the rows and columns to be used in
             random list generation.This list enables us to randomly select rows and columns.
         """
         self.totalSum = sum(sum(self.matrix ** 2))
@@ -247,16 +247,16 @@ class CUR_topk:
         self.colSum = (sum(self.matrix ** 2))/self.totalSum
 
     def generateRandomNos(self, probDist, size, sampleSize, choice):
-        """ The method generates sampleSize number of random numbers which are in the range of 
+        """ The method generates sampleSize number of random numbers which are in the range of
             size. It samples out them using the given probability distribution
         """
         if choice == 0: return np.random.choice(np.arange(0,size), sampleSize, p=probDist)
         else: return np.random.choice(np.arange(0,size), sampleSize, replace=False,p=probDist)
 
     def find_C_U_R(self, choice, sampleSize):
-        """ Method to compute C,U and R matrix in the CUR decomposition 
+        """ Method to compute C,U and R matrix in the CUR decomposition
         """
-        rand_no = self.generateRandomNos(self.colSum, self.numCols, 2, choice)
+        rand_no = self.generateRandomNos(self.colSum, self.numCols, 50, choice)
         self.c_indices = rand_no
         self.C = (self.matrix[:,rand_no]).astype(float)
         colIdx, idx = 0, 0
@@ -267,7 +267,7 @@ class CUR_topk:
             colIdx += 1
 
 
-        rand_no = self.generateRandomNos(self.rowSum, self.numRows, 2, choice)
+        rand_no = self.generateRandomNos(self.rowSum, self.numRows, 50, choice)
         self.R = (self.matrix[rand_no,:]).astype(float)
         rowIdx, idx = 0, 0
         while rowIdx < sampleSize:
@@ -315,7 +315,7 @@ print("MAE for CUR: ", MAE(pred,matrix))
 class CUR_90:
     """
     A Recommender System model based on CUR approximation with 90% energy.
-    
+
     Normalizes the Utility matrix consisting of users, movies and their ratings by subtracting values in a row
     by their row mean , which handles the problem of strict and generous raters.
     CUR factorizes the utility matrix into C(m x k), U(k X k) and R(k X n)..
@@ -327,11 +327,11 @@ class CUR_90:
         self.numRows = np.shape(self.matrix)[0]
         self.numCols = np.shape(self.matrix)[1]
         self.getProbDistribution()
-        self.find_C_U_R(1,2)
+        self.find_C_U_R(1,50)
         self.multiply()
 
     def getProbDistribution(self):
-        """ Gets the probability distribution for the rows and columns to be used in 
+        """ Gets the probability distribution for the rows and columns to be used in
             random list generation.
         """
         self.totalSum = sum(sum(self.matrix ** 2))
@@ -339,16 +339,16 @@ class CUR_90:
         self.colSum = (sum(self.matrix ** 2))/self.totalSum
 
     def generateRandomNos(self, probDist, size, sampleSize, choice):
-        """ The method generates sampleSsize number of random numbers which are in the range of 
+        """ The method generates sampleSsize number of random numbers which are in the range of
             size. It samples out them using the given probability distribution
         """
         if choice == 0: return np.random.choice(np.arange(0,size), sampleSize, p=probDist)
         else: return np.random.choice(np.arange(0,size), sampleSize, replace=False,p=probDist)
 
     def find_C_U_R(self, choice, sampleSize):
-        """ Method to compute C,U and R matrix in the CUR decomposition 
+        """ Method to compute C,U and R matrix in the CUR decomposition
         """
-        rand_no = self.generateRandomNos(self.colSum, self.numCols, 2, choice)
+        rand_no = self.generateRandomNos(self.colSum, self.numCols, 50, choice)
         self.c_indices = rand_no
         self.C = (self.matrix[:,rand_no]).astype(float)
         colIdx, idx = 0, 0
@@ -358,7 +358,7 @@ class CUR_90:
             idx += 1
             colIdx += 1
 
-        rand_no = self.generateRandomNos(self.rowSum, self.numRows, 2, choice)
+        rand_no = self.generateRandomNos(self.rowSum, self.numRows, 50, choice)
         self.R = (self.matrix[rand_no,:]).astype(float)
         rowIdx, idx = 0, 0
         while rowIdx < sampleSize:
@@ -366,7 +366,7 @@ class CUR_90:
                 self.R[rowIdx, colIdx] /= (sampleSize*self.rowSum[rand_no[idx]])**0.5
             idx += 1
             rowIdx += 1
-            
+
         self.U = self.R[:,self.c_indices]
         svd = SVD_90(self.U)
         Y = svd.V.T
