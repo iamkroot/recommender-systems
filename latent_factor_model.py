@@ -116,7 +116,6 @@ def run_lfm(num_factors, num_epochs, gamma, lambda_):
     """Run the LatentFactorModel using the given parameters, and also calculate RMSE
     and MAE values on the test dataset after every epoch.
     """
-    dh = DatasetHandler()
     lf = LatentFactorModel(
         dh.max_movie + 1, dh.max_user + 1, dh.global_mean, num_factors
     )
@@ -141,8 +140,9 @@ def main():
     )
     for params in configs:
         print(params)
-        run_lfm(params)
+        run_lfm(*params)
 
 
 if __name__ == "__main__":
+    dh = DatasetHandler()
     main()
